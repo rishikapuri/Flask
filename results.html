@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Screener — Ranked Results</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="shell">
+
+    <header class="masthead">
+      <div class="brand">
+        Resume Screener
+        <small>Candidate ranking by similarity match</small>
+      </div>
+      <div class="meta">{{ total }} candidate{{ "s" if total != 1 else "" }} scored</div>
+    </header>
+
+    <div class="results-head">
+      <p class="eyebrow">Step 02 — Results</p>
+      <h1>Ranked by fit to the role</h1>
+
+      <div class="results-stat-row">
+        <div class="stat">
+          <span class="stat-num">{{ total }}</span>
+          <span class="stat-label">Candidates read</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">{{ candidates[0].score if candidates else "—" }}</span>
+          <span class="stat-label">Top match score</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num">{{ candidates|selectattr("band", "equalto", "strong")|list|length }}</span>
+          <span class="stat-label">Strong matches</span>
+        </div>
+      </div>
+
+      {% if jd_top_terms %}
+      <div class="jd-terms">
+        <span class="mt-label" style="display:block; margin-bottom:8px; text-transform:uppercase; letter-spacing:0.08em; color:var(--gray-3); font-size:10.5px;">What the role is weighted toward</span>
+        {% for term in jd_top_terms %}<span>{{ term }}</span>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {% if candidates %}
+    <div class="candidate-list">
+      {% for c in candidates %}
+      <div class="candidate band-{{ c.band }}">
+        <div class="rank-num">
+          <strong>{{ "%02d"|format(c.rank) }}</strong>
+          rank
+        </div>
+
+        <div class="candidate-main">
+          <h2>{{ c.name }}</h2>
+          <div class="candidate-contact">
+            <span>{{ c.email }}</span>
+            <span>{{ c.phone }}</span>
+            <span>{{ c.filename }}</span>
+          </div>
+          <p class="candidate-preview">{{ c.preview }}{{ "…" if c.preview|length >= 280 }}</p>
+
+          {% if c.matched_keywords %}
+          <div class="matched-terms">
+            <span class="mt-label">Matched on</span>
+            {% for kw in c.matched_keywords %}<em>{{ kw }}</em>{% endfor %}
+          </div>
+          {% else %}
+          <div class="no-matches">No strong keyword overlap with the role's top terms.</div>
+          {% endif %}
+        </div>
+
+        <div class="score-col">
+          <div class="score-num">{{ c.score }}<span>/100</span></div>
+          <div class="score-band">{{ c.band }} match</div>
+          <div class="score-meter">
+            <div class="score-meter-fill" style="width: {{ c.score }}%;"></div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">No candidates could be scored.</div>
+    {% endif %}
+
+    {% if skipped %}
+    <div class="skipped-note">
+      Could not read {{ skipped|length }} file{{ "s" if skipped|length != 1 else "" }}: {{ skipped|join(", ") }} — file may be image-only, corrupted, or empty.
+    </div>
+    {% endif %}
+
+    <a href="{{ url_for('index') }}" class="back-link">← Screen another batch</a>
+
+  </div>
+</body>
+</html>
