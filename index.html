@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume Screener — Candidate Intake</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="shell">
+
+    <header class="masthead">
+      <div class="brand">
+        Resume Screener
+        <small>Candidate ranking by similarity match</small>
+      </div>
+      <div class="meta">File No. {{ file_no }}</div>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="intake-head">
+      <p class="eyebrow">Step 01 — Intake</p>
+      <h1>Paste the role. Drop the resumes. See who fits.</h1>
+      <p>The screener reads every resume, converts the job description and each candidate into comparable vectors, and ranks the stack by similarity — same logic a careful first pass should follow, done in seconds.</p>
+    </div>
+
+    <form action="{{ url_for('screen') }}" method="post" enctype="multipart/form-data" id="screen-form">
+
+      <div class="field-block">
+        <div class="field-label">
+          <span class="num">01 / Job description</span>
+          <span class="hint">paste full text</span>
+        </div>
+        <textarea name="job_description" id="job_description" placeholder="Paste the job description here — title, responsibilities, required skills, and experience level. The more specific the text, the sharper the ranking."></textarea>
+      </div>
+
+      <div class="field-block">
+        <div class="field-label">
+          <span class="num">02 / Resumes</span>
+          <span class="hint">PDF, DOCX, or TXT</span>
+        </div>
+        <label class="dropzone" id="dropzone">
+          <div class="dz-title">Click to browse, or drop files here</div>
+          <div class="dz-sub">Multiple files accepted — up to 25MB total</div>
+          <input type="file" name="resumes" id="resumes" multiple accept=".pdf,.docx,.txt" required>
+        </label>
+        <div id="file-list"></div>
+      </div>
+
+      <div class="submit-row">
+        <button type="submit" class="btn-primary">Rank candidates →</button>
+        <p class="submit-note">Files are read once to extract text and discarded immediately after scoring. Nothing is stored.</p>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const input = document.getElementById('resumes');
+    const fileList = document.getElementById('file-list');
+
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function renderFileList() {
+      fileList.innerHTML = '';
+      const files = Array.from(input.files);
+      files.forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        row.innerHTML = `<span class="fname">${f.name}</span><span class="fsize">${formatSize(f.size)}</span>`;
+        fileList.appendChild(row);
+      });
+    }
+
+    input.addEventListener('change', renderFileList);
+
+    ['dragover', 'dragenter'].forEach(evt => {
+      dropzone.addEventListener(evt, e => {
+        e.preventDefault();
+        dropzone.classList.add('is-dragover');
+      });
+    });
+
+    ['dragleave', 'drop'].forEach(evt => {
+      dropzone.addEventListener(evt, e => {
+        dropzone.classList.remove('is-dragover');
+      });
+    });
+
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length) {
+        input.files = e.dataTransfer.files;
+        renderFileList();
+      }
+    });
+  </script>
+</body>
+</html>
